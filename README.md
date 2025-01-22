@@ -13,6 +13,3 @@
   <img src="assets/pipeline.png"/>
 </div><br/>
 ## 📜 BibTeX
-```bibtex
-
-```
