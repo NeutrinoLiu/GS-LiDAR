@@ -14,3 +14,11 @@
 </div><br/>
 
 ## 📜 BibTeX
+```
+@inproceedings{jiang2025gslidar,
+  title={GS-LiDAR: Generating Realistic LiDAR Point Clouds with Panoramic Gaussian Splatting},
+  author={Jiang, Junzhe and Gu, Chun and Chen, Yurui and Zhang, Li},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2025}
+}
+```
