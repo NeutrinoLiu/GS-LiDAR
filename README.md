@@ -14,7 +14,7 @@
 </div><br/>
 
 ## 📜 BibTeX
-```
+``` bibtex
 @inproceedings{jiang2025gslidar,
   title={GS-LiDAR: Generating Realistic LiDAR Point Clouds with Panoramic Gaussian Splatting},
   author={Jiang, Junzhe and Gu, Chun and Chen, Yurui and Zhang, Li},
