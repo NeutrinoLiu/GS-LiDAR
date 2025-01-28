@@ -1,8 +1,8 @@
 # GS-LiDAR: Generating Realistic LiDAR Point Clouds with Panoramic Gaussian Splatting
 
-### [[Project]]() [[Paper]]() 
+### [[Project]]() [[Paper]](https://arxiv.org/abs/2501.13971) 
 
-> [**GS-LiDAR: Generating Realistic LiDAR Point Clouds with Panoramic Gaussian Splatting**](),            
+> [**GS-LiDAR: Generating Realistic LiDAR Point Clouds with Panoramic Gaussian Splatting**](https://arxiv.org/abs/2501.13971),            
 > Junzhe Jiang, Chun Gu, Yurui Chen, [Li Zhang](https://lzrobots.github.io)       
 > **ICLR 2025**
 
