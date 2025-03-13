@@ -1,0 +1,16 @@
+tqdm
+numpy==1.26.3
+imageio
+imageio[ffmpeg]
+kornia
+trimesh
+Pillow
+ninja
+omegaconf
+plyfile
+opencv_python
+opencv_contrib_python
+tensorboardX
+matplotlib
+camtools
+lpips
