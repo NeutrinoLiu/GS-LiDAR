@@ -24,10 +24,10 @@ class KITTI360Loader:
             )
         if not self.data_poses_dir.is_dir():
             raise FileNotFoundError(f"Data poses dir {self.data_poses_dir} not found.")
-        if not self.data_2d_raw_dir.is_dir():
-            raise FileNotFoundError(
-                f"Data 2D raw dir {self.data_2d_raw_dir} not found."
-            )
+        # if not self.data_2d_raw_dir.is_dir():
+        #     raise FileNotFoundError(
+        #         f"Data 2D raw dir {self.data_2d_raw_dir} not found."
+        #     )
         if not self.data_3d_raw_dir.is_dir():
             raise FileNotFoundError(
                 f"Data 3D raw dir {self.data_3d_raw_dir} not found."
