@@ -30,10 +30,17 @@ from utils.metrics_utils import DepthMeter, PointsMeter, RaydropMeter, Intensity
 from chamfer.chamfer3D.dist_chamfer_3D import chamfer_3DDist
 from scene.unet import UNet
 
+from tensorboardX import SummaryWriter
+
 EPS = 1e-5
 
 
 def training(args):
+
+    tb_path = os.path.join(args.model_path, 'tb')
+    tb_writer = SummaryWriter(tb_path)
+    tb_per_frame_loss = {}
+
     vis_path = os.path.join(args.model_path, 'visualization')
     os.makedirs(vis_path, exist_ok=True)
 
@@ -253,6 +260,15 @@ def training(args):
         loss.backward()
         log_dict['loss'] = loss.item()
 
+        tb_writer.add_scalars(
+            'TrainLoss',
+            {f"frame_{viewpoint_cam.colmap_id}": loss_lidar.item()},
+            iteration)
+        tb_writer.add_scalar(
+            'TrainLoss/loss_lidar',
+            loss_lidar.item(),
+            iteration)
+        
         iter_end.record()
 
         with torch.no_grad():
@@ -645,7 +661,7 @@ if __name__ == "__main__":
     parser.add_argument("--debug_cuda", action="store_true")
     parser.add_argument("--test_only", action="store_true")
     parser.add_argument("--median_depth", action="store_true")
-    parser.add_argument("--show_log", action="store_true")
+    parser.add_argument("--show_log", action="store_true", default=True)
     args_read, _ = parser.parse_known_args()
 
     base_conf = OmegaConf.load(args_read.base_config)

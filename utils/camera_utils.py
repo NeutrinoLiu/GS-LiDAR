@@ -13,6 +13,66 @@ from scene.scene_utils import CameraInfo
 from tqdm import tqdm
 from torchvision.utils import save_image
 
+def downsample_depth_map(depth_map, scale_factor=2):
+    """
+    Downsample a depth map numpy array to a lower resolution using OpenCV.
+    
+    Args:
+        depth_map (numpy.ndarray): Input depth map with shape (H, W) or (1, H, W)
+        scale_factor (int, optional): Factor by which to reduce dimensions. Default is 2.
+    
+    Returns:
+        numpy.ndarray: Downsampled depth map with same number of dimensions as input
+    """
+    # Make sure input is a numpy array
+    depth_map = np.asarray(depth_map)
+    
+    # Handle different input shapes
+    original_shape_len = len(depth_map.shape)
+    
+    if original_shape_len == 3:  # Shape is (1, H, W)
+        depth_map = depth_map[0]  # Extract the 2D map
+        add_channel_dim = True
+    else:
+        add_channel_dim = False
+    
+    # Calculate new dimensions
+    h, w = depth_map.shape
+    new_h, new_w = h // scale_factor, w // scale_factor
+    
+    # Resize the depth map
+    # INTER_NEAREST or INTER_LINEAR are typically good for depth maps
+    # INTER_AREA can be better for downsampling
+    downsampled = cv2.resize(depth_map, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    
+    # Restore the channel dimension if original input had it
+    if add_channel_dim:
+        downsampled = np.expand_dims(downsampled, axis=0)
+    
+    return downsampled
+
+class Perturb:
+    PERTURB_IDX = [66, 88, 33, 111,]
+    PERTURB_INTENTSITY_max = 0.1
+    PERTURB_INTENTSITY = {}
+    @staticmethod
+    def perturb_depth(id, depth):
+        if id in Perturb.PERTURB_IDX and id not in Perturb.PERTURB_INTENTSITY:
+            # generate a noise with the same shape as depth
+            noise = np.random.uniform(-Perturb.PERTURB_INTENTSITY_max, Perturb.PERTURB_INTENTSITY_max, depth.shape)
+            Perturb.PERTURB_INTENTSITY[id] = noise
+            print(f">>>>> Perturb camera {id} with noise")
+        if id in Perturb.PERTURB_INTENTSITY:
+            # print(f"pts_depth means std before: {np.mean(depth)}, {np.std(depth)}")
+            if Perturb.PERTURB_INTENTSITY[id].shape != depth.shape:
+                # downsample the noise
+                # depth is in shape (1, H, W)
+                noise = downsample_depth_map(Perturb.PERTURB_INTENTSITY[id], scale_factor=2)
+                Perturb.PERTURB_INTENTSITY[id] = noise
+            scaler = np.clip(Perturb.PERTURB_INTENTSITY[id] + 1, 0.5, 1.5)
+            depth = depth * scaler
+            # print(f"pts_depth means std after: {np.mean(depth)}, {np.std(depth)}")
+        return depth
 
 def loadCam(args, id, cam_info: CameraInfo, resolution_scale):
     orig_h, orig_w = args.hw
@@ -70,6 +130,7 @@ def loadCam(args, id, cam_info: CameraInfo, resolution_scale):
                 pts_depth[0, x, y] = uvz[i, 2]
                 pts_intensity[0, x, y] = uvz[i, 3]
 
+        # pts_depth = Perturb.perturb_depth(cam_info.uid, pts_depth)
         pts_depth = torch.from_numpy(pts_depth).float().cuda()
         pts_intensity = torch.from_numpy(pts_intensity).float().cuda()
     else:
