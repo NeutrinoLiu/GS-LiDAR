@@ -12,6 +12,87 @@ import numpy as np
 from scene.scene_utils import CameraInfo
 from tqdm import tqdm
 from torchvision.utils import save_image
+import time
+
+def subsample_pointcloud(points, M, alpha=0.01):
+    """
+    Subsample a point cloud to achieve roughly uniform density within each grid cell.
+    
+    Parameters:
+    -----------
+    points : ndarray, shape (N, 3)
+        The input point cloud with N points in 3D space
+    M : int
+        Target number of points after subsampling
+    alpha : float, default=0.001
+        Parameter to determine grid size as alpha * diameter of original point cloud
+        
+    Returns:
+    --------
+    ndarray, shape (M', 3)
+        Subsampled point cloud with approximately M points
+    """
+    if points.shape[0] <= M:
+        # If the original point cloud has fewer points than M, return all points
+        return np.arange(points.shape[0])
+    
+    # Calculate the diameter of the point cloud
+    min_coords = np.min(points, axis=0)
+    max_coords = np.max(points, axis=0)
+    diameter = np.linalg.norm(max_coords - min_coords)
+    
+    print(f"min_coords: {min_coords}, max_coords: {max_coords}, diameter: {diameter}")
+
+    # Calculate the grid size
+    grid_size = alpha * diameter
+    
+    # Calculate the number of grid cells in each dimension
+    grid_dims = np.ceil((max_coords - min_coords) / grid_size).astype(int)
+    
+    # Create a dictionary to store points in each grid cell
+    grid_dict = {}
+    
+    print(f"start to subsample point cloud, grid_dims: {grid_dims}, original points: {points.shape[0]}, target points: {M}")
+    start = time.time()
+
+    # Assign each point to a grid cell
+    for i, point in enumerate(points):
+        # Calculate the grid cell indices
+        grid_idx = tuple(np.floor((point - min_coords) / grid_size).astype(int))
+        
+        # Add the point index to the corresponding grid cell
+        if grid_idx in grid_dict:
+            grid_dict[grid_idx].append(i)
+        else:
+            grid_dict[grid_idx] = [i]
+    
+    # Calculate the number of points to sample from each non-empty grid cell
+    num_cells = len(grid_dict)
+    points_per_cell = max(1, int(np.ceil(M / num_cells)))
+    
+    # Sample points from each grid cell
+    sampled_indices = []
+    exact_points_per_cell = []
+    for cell_indices in grid_dict.values():
+        # If the cell has fewer points than points_per_cell, take all points
+        if len(cell_indices) <= points_per_cell:
+            sampled_indices.extend(cell_indices)
+            exact_points_per_cell.append(len(cell_indices))
+        else:
+            # Randomly sample points_per_cell points from the cell
+            sampled_indices.extend(np.random.choice(cell_indices, points_per_cell, replace=False))
+            exact_points_per_cell.append(points_per_cell)
+
+    print(f"mean points per cell: {np.mean(exact_points_per_cell)}, std points per cell: {np.std(exact_points_per_cell)}")
+    print(f"preliminary subsampled points: {len(sampled_indices)}")
+    print(f"subsample time: {time.time() - start}")
+
+    # If we have more points than M, randomly subsample to get exactly M points
+    if len(sampled_indices) > M:
+        sampled_indices = np.random.choice(sampled_indices, M, replace=False)
+    
+    # Return the subsampled point cloud
+    return sampled_indices
 
 def downsample_depth_map(depth_map, scale_factor=2):
     """
@@ -52,8 +133,8 @@ def downsample_depth_map(depth_map, scale_factor=2):
     return downsampled
 
 class Perturb:
-    PERTURB_IDX = [66, 88, 33, 111,]
-    PERTURB_INTENTSITY_max = 0.1
+    PERTURB_IDX = [5]
+    PERTURB_INTENTSITY_max = 0.2
     PERTURB_INTENTSITY = {}
     @staticmethod
     def perturb_depth(id, depth):
@@ -130,7 +211,7 @@ def loadCam(args, id, cam_info: CameraInfo, resolution_scale):
                 pts_depth[0, x, y] = uvz[i, 2]
                 pts_intensity[0, x, y] = uvz[i, 3]
 
-        # pts_depth = Perturb.perturb_depth(cam_info.uid, pts_depth)
+        pts_depth = Perturb.perturb_depth(cam_info.uid, pts_depth)
         pts_depth = torch.from_numpy(pts_depth).float().cuda()
         pts_intensity = torch.from_numpy(pts_intensity).float().cuda()
     else:
@@ -149,7 +230,8 @@ def loadCam(args, id, cam_info: CameraInfo, resolution_scale):
         resolution=resolution,
         pts_depth=pts_depth,
         pts_intensity=pts_intensity,
-        towards=cam_info.towards
+        towards=cam_info.towards,
+        sequence_id=cam_info.sequence_id,
     )
 
 

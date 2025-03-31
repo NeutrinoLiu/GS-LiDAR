@@ -16,10 +16,16 @@ from torchvision.utils import save_image
 
 
 class Camera(nn.Module):
+
+    @property
+    def name(self):
+        return f"{self.uid}\t= {self.sequence_id}@{self.colmap_id}"
+
     def __init__(self, colmap_id, R, T, vfov=None, hfov=None, uid=0,
                  trans=np.array([0.0, 0.0, 0.0]), scale=1.0, data_device="cuda", timestamp=0.0,
                  resolution=None, image_path=None,
-                 pts_depth=None, pts_intensity=None, towards=None
+                 pts_depth=None, pts_intensity=None, towards=None,
+                 sequence_id="default"
                  ):
         super(Camera, self).__init__()
 
@@ -32,6 +38,7 @@ class Camera(nn.Module):
         self.resolution = resolution
         self.image_path = image_path
         self.towards = towards
+        self.sequence_id = sequence_id
 
         try:
             self.data_device = torch.device(data_device)

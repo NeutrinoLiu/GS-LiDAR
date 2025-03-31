@@ -18,3 +18,9 @@ train.sh
 
 chamfer/tmp/*
 .ipynb_checkpoints
+
+simple-knn
+chamfer
+configs
+advCP
+opencood

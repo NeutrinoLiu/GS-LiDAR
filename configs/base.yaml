@@ -1,3 +1,5 @@
+frame_stride: 1
+
 test_only: False
 only_velodyne: False
 scale_factor: 1.0
@@ -32,7 +34,7 @@ checkpoint_iterations: [7000, 15000, 30000]
 exhaust_test: false
 test_interval: 5000
 render_static: false
-vis_step: 500
+vis_step: 200
 start_checkpoint: null
 seed: 0
 
