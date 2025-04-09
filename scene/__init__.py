@@ -17,7 +17,8 @@ from scene.opv2v_loader import readOPV2VInfo
 
 sceneLoadTypeCallbacks = {
     "Kitti360": readKitti360Info,
-    "OPV2V": readOPV2VInfo
+    "OPV2V": readOPV2VInfo,
+    "OPV2V_SR": readOPV2VInfo_Spoof_Remove,
 }
 
 

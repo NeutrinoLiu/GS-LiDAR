@@ -19,6 +19,12 @@ from matplotlib import cm
 from utils.system_utils import save_ply
 from utils.camera_utils import subsample_pointcloud
 
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "AdvCollaborativePerception")))
+
+from attack import GeneralAttacker
+
 
 def range_to_ply(depth, filename, vfov=(-31.96, 10.67), hfov=(-90, 90)):
     panorama_height, panorama_width = depth.shape[-2:]
@@ -98,6 +104,191 @@ def transform_poses_pca(poses, fix_scale_factor=True):
     transform = np.diag(np.array([scale_factor] * 3 + [1])) @ transform
 
     return poses_recentered, transform, scale_factor
+
+
+def readOPV2VInfo_Spoof_Remove(args):
+    ga = GeneralAttacker()
+
+    path = args.source_path
+    eval = args.eval
+    num_pts = args.num_pts
+    time_duration = args.time_duration
+    debug_cuda = args.debug_cuda
+
+    normal_lidar, attack_lidar, general_info, attack_info = ga.attack(
+        attack_type=args.attacker_type,
+        dense=args.dense,
+        sync=args.sync,
+        advshape=args.advshape,
+        attack_id=args.attack_id,
+        attack_frame_ids=args.attack_frame_ids
+    )
+
+    assert args.vfov is not None and args.hfov is not None
+
+    frames = general_info["frame_ids"]
+
+    # static
+    s_frame_id = frames[0]
+    e_frame_id = frames[-1]
+    val_frame_ids = args.val_frames
+    stride = args.frame_stride
+    args.frames = frames
+
+    cars = general_info["vehicle_ids"]
+    
+    def parse_one_car(sequence_id, lidar_data):
+
+        point_list = []
+        points_time = []
+        cam_infos = []
+
+        for frame_idx in tqdm(range(frames), desc="Reading OPV2V data"):
+
+            points = lidar_data[frame_idx][sequence_id]["lidar"]
+            points[:, 3] = 1.0 # Assign a default intensity of 1.0
+            intensity = points[:, 3]
+            points = points[:, :3]
+
+            # 把自车的lidar点去掉
+            condition = (np.linalg.norm(points, axis=1) > 2.5)  # & (intensity > 0)
+            indices = np.where(condition)
+            points = points[indices]
+            intensity = intensity[indices]
+
+            lidar2globals = lidar_data[frame_idx][sequence_id]["lidar_pose"]
+            points_homo = np.concatenate([points, np.ones_like(points[:, :1])], axis=-1)
+            points = (points_homo @ lidar2globals.T)[:, :3]
+            point_list.append(points)
+
+            timestamp = time_duration[0] + (time_duration[1] - time_duration[0]) * frame_idx / (frames - 1)
+            point_time = np.full_like(points[:, :1], timestamp)
+            points_time.append(point_time)
+
+            idx = frame_idx
+            w2l = np.array([0, -1, 0, 0,
+                            0, 0, -1, 0,
+                            1, 0, 0, 0,
+                            0, 0, 0, 1]).reshape(4, 4) @ np.linalg.inv(lidar2globals)
+            R = np.transpose(w2l[:3, :3])
+            T = w2l[:3, 3]
+            points_cam = points @ R + T
+
+            # 前180度
+            cam_infos.append(CameraInfo(uid=idx, R=R, T=T,
+                                        timestamp=timestamp,
+                                        pointcloud_camera=points_cam,
+                                        intensity=intensity,
+                                        towards='forward',
+                                        sequence_id=sequence_id))
+
+            # 后180度
+            R_back = R @ np.array([-1, 0, 0,
+                                0, 1, 0,
+                                0, 0, -1]).reshape(3, 3)
+            T_back = T * np.array([-1, 1, -1])
+            points_cam_back = points @ R_back + T_back
+            cam_infos.append(CameraInfo(uid=idx + frames, R=R_back, T=T_back,
+                                        timestamp=timestamp, pointcloud_camera=points_cam_back, intensity=intensity,
+                                        towards='backward',
+                                        sequence_id=sequence_id))
+
+        pointcloud = np.concatenate(point_list, axis=0)
+        pointcloud_timestamp = np.concatenate(points_time, axis=0)
+
+        w2cs = np.zeros((len(cam_infos), 4, 4))
+        Rs = np.stack([c.R for c in cam_infos], axis=0)
+        Ts = np.stack([c.T for c in cam_infos], axis=0)
+        w2cs[:, :3, :3] = Rs.transpose((0, 2, 1))
+        w2cs[:, :3, 3] = Ts
+        w2cs[:, 3, 3] = 1
+        c2ws = unpad_poses(np.linalg.inv(w2cs))
+
+        return pointcloud, pointcloud_timestamp, c2ws, cam_infos
+
+    wild_cards = ["*", "all"]
+    total_agents = 0
+    if args.sequence_id not in wild_cards:
+        pointcloud_all, pointcloud_timestamp_all, c2ws_all, cam_infos_all = parse_one_car(sequence_id, normal_lidar)
+        total_agents = 1
+    else:
+        pointcloud_all = []
+        pointcloud_timestamp_all = []
+        c2ws_all = []
+        cam_infos_all = []
+        for sequence_id in cars:
+            total_agents += 1
+            pointcloud, pointcloud_timestamp, c2ws, cam_infos = parse_one_car(sequence_id, normal_lidar) # normal lidar or attack lidar
+            pointcloud_all.append(pointcloud)
+            pointcloud_timestamp_all.append(pointcloud_timestamp)
+            c2ws_all.append(c2ws)
+            cam_infos_all.extend(cam_infos)
+        
+    pointcloud_all = np.concatenate(pointcloud_all, axis=0)
+    pointcloud_timestamp_all = np.concatenate(pointcloud_timestamp_all, axis=0)
+    c2ws_all = np.concatenate(c2ws_all, axis=0)
+
+    num_pts = min(num_pts, pointcloud_all.shape[0])
+    # indices = np.random.choice(pointcloud_all.shape[0], num_pts, replace=False)
+    indices = subsample_pointcloud(pointcloud_all, num_pts)
+    pointcloud_all = pointcloud_all[indices]
+    pointcloud_timestamp_all = pointcloud_timestamp_all[indices]
+    
+    print(f"Total {len(cam_infos_all)} cameras from {total_agents} agents.")
+
+    if not args.test_only:
+        c2ws_all, transform_all, scale_factor_all = transform_poses_pca(c2ws_all, args.dynamic)
+        np.savez(os.path.join(args.model_path, 'transform_poses_pca.npz'), transform=transform_all, scale_factor=scale_factor_all)
+        c2ws_all = pad_poses(c2ws_all)
+    else:
+        data = np.load(os.path.join(args.model_path, 'transform_poses_pca.npz'))
+        transform_all = data['transform']
+        scale_factor_all = data['scale_factor'].item()
+        c2ws_all = np.diag(np.array([1 / scale_factor_all] * 3 + [1])) @ transform_all @ pad_poses(c2ws_all)
+        c2ws_all[:, :3, 3] *= scale_factor_all
+
+    for idx, cam_info in enumerate(cam_infos_all):
+        c2w = c2ws_all[idx]
+        w2c = np.linalg.inv(c2w)
+        cam_info.R[:] = np.transpose(w2c[:3, :3])  # R is stored transposed due to 'glm' in CUDA code
+        cam_info.T[:] = w2c[:3, 3]
+        cam_info.pointcloud_camera[:] *= scale_factor_all
+
+    pointcloud_all = (np.pad(pointcloud_all, ((0, 0), (0, 1)), constant_values=1) @ transform_all.T)[:, :3]
+    args.scale_factor = float(scale_factor_all)
+
+    mod = args.cam_num
+
+    if eval:
+        train_cam_infos = [c for idx, c in enumerate(cam_infos_all) if (idx // mod + s_frame_id) not in val_frame_ids]
+        test_cam_infos = [c for idx, c in enumerate(cam_infos_all) if (idx // mod + s_frame_id) in val_frame_ids]
+    else:
+        train_cam_infos = cam_infos_all
+        test_cam_infos = [c for idx, c in enumerate(cam_infos_all) if (idx // mod + s_frame_id) in val_frame_ids]
+
+    nerf_normalization = getNerfppNorm(train_cam_infos)
+    nerf_normalization['radius'] = 1
+
+    ply_path = os.path.join(args.model_path, "points3d.ply")
+    if not args.test_only:
+        dummy_rgbs = np.random.random((pointcloud_all.shape[0], 3)) * 255.0
+        storePly(ply_path, pointcloud_all, dummy_rgbs, pointcloud_timestamp_all)
+
+    try:
+        pcd = fetchPly(ply_path)
+    except:
+        pcd = None
+
+    time_interval = (time_duration[1] - time_duration[0]) / (frames - 1)
+
+    scene_info = SceneInfo(point_cloud=pcd,
+                           train_cameras=train_cam_infos,
+                           test_cameras=test_cam_infos,
+                           nerf_normalization=nerf_normalization,
+                           ply_path=ply_path,
+                           time_interval=time_interval)
+
+    return scene_info    
 
 
 def readOPV2VInfo(args):
