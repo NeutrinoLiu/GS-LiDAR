@@ -211,7 +211,7 @@ def loadCam(args, id, cam_info: CameraInfo, resolution_scale):
                 pts_depth[0, x, y] = uvz[i, 2]
                 pts_intensity[0, x, y] = uvz[i, 3]
 
-        pts_depth = Perturb.perturb_depth(cam_info.uid, pts_depth)
+        # pts_depth = Perturb.perturb_depth(cam_info.uid, pts_depth)
         pts_depth = torch.from_numpy(pts_depth).float().cuda()
         pts_intensity = torch.from_numpy(pts_intensity).float().cuda()
     else:
