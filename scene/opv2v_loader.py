@@ -116,7 +116,7 @@ def readOPV2VInfo_Spoof_Remove(args):
     debug_cuda = args.debug_cuda
 
     normal_lidar, attack_lidar, general_info, attack_info = ga.attack(
-        attack_type=args.attacker_type,
+        attacker_type=args.attacker_type,
         dense=args.dense,
         sync=args.sync,
         advshape=args.advshape,
