@@ -209,7 +209,7 @@ def readOPV2VInfo_Spoof_Remove(args):
     wild_cards = ["*", "all"]
     total_agents = 0
     if args.sequence_id not in wild_cards:
-        pointcloud_all, pointcloud_timestamp_all, c2ws_all, cam_infos_all = parse_one_car(sequence_id, normal_lidar)
+        pointcloud_all, pointcloud_timestamp_all, c2ws_all, cam_infos_all = parse_one_car(sequence_id, attack_lidar)
         total_agents = 1
     else:
         pointcloud_all = []
@@ -218,7 +218,7 @@ def readOPV2VInfo_Spoof_Remove(args):
         cam_infos_all = []
         for sequence_id in cars:
             total_agents += 1
-            pointcloud, pointcloud_timestamp, c2ws, cam_infos = parse_one_car(sequence_id, normal_lidar) # normal lidar or attack lidar
+            pointcloud, pointcloud_timestamp, c2ws, cam_infos = parse_one_car(sequence_id, attack_lidar)
             pointcloud_all.append(pointcloud)
             pointcloud_timestamp_all.append(pointcloud_timestamp)
             c2ws_all.append(c2ws)
