@@ -183,7 +183,7 @@ def readOPV2VInfo_Spoof_Remove(args):
             points = points[indices]
             intensity = intensity[indices]
 
-            lidar2globals = get_c2w_matrix(lidar_data[frame_idx][sequence_id]["lidar_pose"])
+            lidar2globals = get_c2w_matrix(lidar_data[frame_idx][sequence_id])
             points_homo = np.concatenate([points, np.ones_like(points[:, :1])], axis=-1)
             points = (points_homo @ lidar2globals.T)[:, :3]
             point_list.append(points)
