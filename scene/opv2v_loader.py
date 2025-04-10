@@ -26,6 +26,31 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 from attack import GeneralAttacker
 
 
+def rotation_matrix(roll, yaw, pitch):
+    R = np.array([[np.cos(yaw)*np.cos(pitch), 
+                   np.cos(yaw)*np.sin(pitch)*np.sin(roll)-np.sin(yaw)*np.cos(roll), 
+                   np.cos(yaw)*np.sin(pitch)*np.cos(roll)+np.sin(yaw)*np.sin(roll)],
+                  [np.sin(yaw)*np.cos(pitch), 
+                   np.sin(yaw)*np.sin(pitch)*np.sin(roll)+np.cos(yaw)*np.cos(roll), 
+                   np.sin(yaw)*np.sin(pitch)*np.cos(roll)-np.cos(yaw)*np.sin(roll)],
+                  [-np.sin(pitch), 
+                   np.cos(pitch)*np.sin(roll), 
+                   np.cos(pitch)*np.cos(roll)]])
+    return R
+
+
+def get_c2w_matrix(calib):
+    R = rotation_matrix(*(np.array(calib["lidar_pose"][3:]) * np.pi / 180))
+    
+    translation_vector = np.array(calib["lidar_pose"][:3])
+    
+    c2w_matrix = np.eye(4)
+    c2w_matrix[:3, :3] = R
+    c2w_matrix[:3, 3] = translation_vector
+    
+    return c2w_matrix
+
+
 def range_to_ply(depth, filename, vfov=(-31.96, 10.67), hfov=(-90, 90)):
     panorama_height, panorama_width = depth.shape[-2:]
 
@@ -158,7 +183,7 @@ def readOPV2VInfo_Spoof_Remove(args):
             points = points[indices]
             intensity = intensity[indices]
 
-            lidar2globals = lidar_data[frame_idx][sequence_id]["lidar_pose"]
+            lidar2globals = get_c2w_matrix(lidar_data[frame_idx][sequence_id]["lidar_pose"])
             points_homo = np.concatenate([points, np.ones_like(points[:, :1])], axis=-1)
             points = (points_homo @ lidar2globals.T)[:, :3]
             point_list.append(points)
