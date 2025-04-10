@@ -126,11 +126,13 @@ def readOPV2VInfo_Spoof_Remove(args):
 
     assert args.vfov is not None and args.hfov is not None
 
-    frames = general_info["frame_ids"]
+    frame_data = general_info["frame_ids"]
+
+    frames = len(frame_data)
 
     # static
-    s_frame_id = frames[0]
-    e_frame_id = frames[-1]
+    s_frame_id = frame_data[0]
+    e_frame_id = frame_data[-1]
     val_frame_ids = args.val_frames
     stride = args.frame_stride
     args.frames = frames
