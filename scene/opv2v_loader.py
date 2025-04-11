@@ -157,7 +157,9 @@ def readOPV2VInfo_Spoof_Remove(args):
 
     # static
     s_frame_id = frame_ids[0]
+    args.frame_start = s_frame_id
     e_frame_id = frame_ids[-1]
+    args.frame_start = s_frame_id
     val_frame_ids = args.val_frames
     stride = args.frame_stride
     args.frames = frames
@@ -207,7 +209,7 @@ def readOPV2VInfo_Spoof_Remove(args):
                                         pointcloud_camera=points_cam,
                                         intensity=intensity,
                                         towards='forward',
-                                        sequence_id=sequence_id))
+                                        sequence_id=str(sequence_id)))
 
             # 后180度
             R_back = R @ np.array([-1, 0, 0,
@@ -218,7 +220,7 @@ def readOPV2VInfo_Spoof_Remove(args):
             cam_infos.append(CameraInfo(uid=idx + frames, R=R_back, T=T_back,
                                         timestamp=timestamp, pointcloud_camera=points_cam_back, intensity=intensity,
                                         towards='backward',
-                                        sequence_id=sequence_id))
+                                        sequence_id=str(sequence_id)))
 
         pointcloud = np.concatenate(point_list, axis=0)
         pointcloud_timestamp = np.concatenate(points_time, axis=0)
