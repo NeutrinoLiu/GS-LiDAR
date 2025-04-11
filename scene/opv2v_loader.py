@@ -134,7 +134,6 @@ def transform_poses_pca(poses, fix_scale_factor=True):
 def readOPV2VInfo_Spoof_Remove(args):
     ga = GeneralAttacker()
 
-    path = args.source_path
     eval = args.eval
     num_pts = args.num_pts
     time_duration = args.time_duration
