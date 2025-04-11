@@ -41,7 +41,7 @@ seed: 0
 # ModelParams
 sh_degree: 3
 scene_type: "Waymo"
-source_path: ???
+source_path: . # source_path is not needed when using spoof/remove attack
 start_frame: 65  # for kitti 
 end_frame: 120  # for kitti
 model_path: ???
