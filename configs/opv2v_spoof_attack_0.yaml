@@ -6,7 +6,7 @@ sync: 0
 advshape: 0
 attack_id: 0
 attack_frame_ids: [9]
-val_frames: [80]
+val_frames: [81]
 
 # ModelParams
 scene_type: "OPV2V_SR"
