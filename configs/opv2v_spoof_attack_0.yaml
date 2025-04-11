@@ -1,12 +1,12 @@
 exhaust_test: false
-frame_stride: 1
+frame_stride: 2
 attacker_type: "spoof"
 dense: 0
 sync: 0
 advshape: 0
 attack_id: 0
 attack_frame_ids: [9]
-val_frames: [81]
+val_frames: [80]
 
 # ModelParams
 scene_type: "OPV2V_SR"
