@@ -18,7 +18,7 @@
 #define DUAL_VISIABLE 1
 
 __device__ const float near_n = 2.0;
-__device__ const float far_n = 90.0;
+__device__ const float far_n = 300.0; // Bangya: plz remove cache and make sure it is recompiled
 __device__ const float FilterInvSquare = 2.0f;
 
 // Spherical harmonics coefficients

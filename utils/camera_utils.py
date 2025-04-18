@@ -14,7 +14,7 @@ from tqdm import tqdm
 from torchvision.utils import save_image
 import time
 
-def subsample_pointcloud(points, M, alpha=0.01):
+def subsample_pointcloud(points, M, alpha=0.0005):
     """
     Subsample a point cloud to achieve roughly uniform density within each grid cell.
     

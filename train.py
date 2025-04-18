@@ -86,7 +86,72 @@ def training(args):
     ema_dict_for_log = defaultdict(int)
     progress_bar = tqdm(range(first_iter + 1, args.iterations + 1), desc="Training progress", miniters=10)
 
+
+    # ------------------------------- viser related ------------------------------ #
+    from scene.cameras import Camera
+    from utils.viser_utils import VisManger
+
+    @torch.no_grad()
+    def test_render(c2w, K, width, height, frame):
+        t_scale = gaussians.get_scaling_t.clamp_max(2)
+        v = gaussians.get_inst_velocity
+        ts = -0.5 + frame / (args.frames - 1)
+
+        fx = K[0, 0]
+        fy = K[1, 1]
+        vfov = np.arctan2(height, 2 * fy) * 180 / np.pi
+        vfov = [-vfov, vfov]
+        hfov = np.arctan2(width, 2 * fx) * 180 / np.pi
+        hfov = [-hfov, hfov]
+        # vfov = [ -25.0, 2.0 ]
+        # hfov = [ -90, 90 ]
+        
+        w2c = np.linalg.inv(c2w)
+
+        dummy_cam = Camera(
+            colmap_id=-1,
+            uid = -1,
+            R = c2w[:3, :3],
+            T = w2c[:3, 3],
+            vfov=vfov,
+            hfov=hfov,
+            data_device="cuda",
+            timestamp=ts,
+            resolution=(width, height),
+            pts_depth=None,
+            pts_intensity=None,
+            towards="forward",
+            sequence_id="viser")
+
+        return render(
+            dummy_cam,
+            gaussians,
+            args,
+            background,
+            env_map=None,
+            other=[t_scale, v],
+            time_shift=None,
+            is_training=False,
+        )
+    
+    vis_cfg = {
+        "vis_modes" : ["depth"],
+        "device" : "cuda",
+        "port" : 8080,
+        "min_frame" : 0,
+        "max_frame" : args.frames,
+    }
+    vis_mgr = VisManger(
+        vis_cfg,
+        test_render
+    )
+
+    # ------------------------------- viser related ------------------------------ #
+
     for iteration in progress_bar:
+
+        vis_mgr.checkin() # viser related
+
         iter_start.record()
         gaussians.update_learning_rate(iteration)
 
@@ -291,7 +356,7 @@ def training(args):
             if iteration > args.densify_until_iter * args.time_split_frac:
                 gaussians.no_time_split = False
 
-            if iteration < args.densify_until_iter and (args.densify_until_num_points < 0 or gaussians.get_xyz.shape[0] < args.densify_until_num_points):
+            if iteration > args.densify_from_iter and iteration < args.densify_until_iter and (args.densify_until_num_points < 0 or gaussians.get_xyz.shape[0] < args.densify_until_num_points):
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
@@ -380,6 +445,8 @@ def training(args):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/ckpt/chkpnt" + str(iteration) + ".pth")
                 torch.save((lidar_raydrop_prior.capture(), iteration), scene.model_path + "/ckpt/lidar_raydrop_prior_chkpnt" + str(iteration) + ".pth")
+        
+        vis_mgr.checkout(iteration) # viser related
 
 
 def complete_eval(iteration, test_iterations, scene: Scene, renderFunc, renderArgs, log_dict, env_map=None):
@@ -732,6 +799,7 @@ if __name__ == "__main__":
 
     # Training done
     print("\nTraining complete.")
+    input("Press Enter to continue...")
 
     if not args.test_only:
         refine()
