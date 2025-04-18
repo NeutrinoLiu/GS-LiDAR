@@ -42,7 +42,8 @@ def render(viewpoint_camera: Camera, pc: GaussianModel, pipe, bg_color: torch.Te
         image_width=int(viewpoint_camera.image_width),
         tanfovx=tanfovx,
         tanfovy=tanfovy,
-        bg=bg_color if env_map is not None else torch.zeros(3, device="cuda"),
+        # bg=bg_color if env_map is not None else torch.zeros(3, device="cuda"),
+        bg=bg_color,
         scale_modifier=scaling_modifier,
         viewmatrix=viewpoint_camera.world_view_transform,
         projmatrix=viewpoint_camera.full_proj_transform,
@@ -55,7 +56,7 @@ def render(viewpoint_camera: Camera, pc: GaussianModel, pipe, bg_color: torch.Te
         scale_factor=pipe.scale_factor
     )
 
-    assert raster_settings.bg.shape[0] == 4
+    assert raster_settings.bg.shape[0] == 4, "expected bg color to be RGBA, got {}".format(raster_settings.bg.shape[0])
 
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
 

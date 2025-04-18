@@ -25,7 +25,7 @@ class Camera(nn.Module):
                  trans=np.array([0.0, 0.0, 0.0]), scale=1.0, data_device="cuda", timestamp=0.0,
                  resolution=None, image_path=None,
                  pts_depth=None, pts_intensity=None, towards=None,
-                 sequence_id="default"
+                 sequence_id="default",
                  ):
         super(Camera, self).__init__()
 

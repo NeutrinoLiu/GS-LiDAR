@@ -12,12 +12,12 @@ import random
 from matplotlib import cm
 
 
-def visualize_depth(depth, near=2, far=50, linear=False, scale_factor=None):
+def visualize_depth(depth, near=2, far=50, linear=False, scale_factor=None, cmap="turbo"):
     if scale_factor is not None:
         depth = depth / scale_factor
 
     depth = depth[0].clone().detach().cpu().numpy()
-    colormap = cm.get_cmap('turbo')
+    colormap = cm.get_cmap(cmap)
     curve_fn = lambda x: -np.log(x + np.finfo(np.float32).eps)
     if linear:
         curve_fn = lambda x: -x

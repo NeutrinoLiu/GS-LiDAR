@@ -53,5 +53,5 @@ lambda_self_supervision: 0.5
 lambda_v_reg: 1e0
 t_init: 0.006
 
-num_pts: 3000000
-densify_until_num_points: 6000000
+num_pts: 2000000
+densify_until_num_points: 5000000
