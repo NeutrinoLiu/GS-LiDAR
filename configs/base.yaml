@@ -28,6 +28,10 @@ dynamic: True
 sky_depth: True
 raydrop_prior_lr: 0.1
 
+# DatasetParams
+spoof_offset: "offsets/spoof_offset.npy"
+remove_offset: "offsets/remove_offset.npy"
+
 test_iterations: [7000, 30000]
 save_iterations: [7000, 30000]
 checkpoint_iterations: [7000, 15000, 30000]

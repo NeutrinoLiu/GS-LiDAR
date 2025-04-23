@@ -134,6 +134,30 @@ def transform_poses_pca(poses, fix_scale_factor=True):
 def readOPV2VInfo_Spoof_Remove(args):
     ga = GeneralAttacker()
 
+    offset_file = args.spoof_offset
+
+    offset_array = None
+    try:
+        offset_array = np.load(offset_file)
+        print(f"Loaded offsets shape: {offset_array.shape} from {offset_file}")
+        if offset_array.shape != (300, 2):
+             print(f"Warn: Offset file shape is not (300, 2). Using zero offsets.")
+             offset_array = np.zeros((300, 2))
+    except FileNotFoundError:
+        print(f"Info: Offset file '{offset_file}' not found. Using zero offsets.")
+        offset_array = np.zeros((300, 2))
+    except Exception as e:
+        print(f"Error loading offset file {offset_file}: {e}. Using zero offsets.")
+        offset_array = np.zeros((300, 2))
+
+    current_offset = None
+    if not (0 <= args.attack_id < 300):
+         print(f"Warn: attack_id {args.attack_id} out of range (0-299). Using zero offset [0, 0].")
+         current_offset = np.array([0.0, 0.0])
+    else:
+         current_offset = offset_array[args.attack_id].tolist() if offset_array is not None else [0.0, 0.0]
+    print(f"Using offset for attack {args.attack_id}: [{current_offset[0]:.2f}, {current_offset[1]:.2f}]")
+
     eval = args.eval
     num_pts = args.num_pts
     time_duration = args.time_duration
