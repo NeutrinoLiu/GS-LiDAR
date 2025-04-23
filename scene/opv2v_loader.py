@@ -169,7 +169,8 @@ def readOPV2VInfo_Spoof_Remove(args):
         sync=args.sync,
         advshape=args.advshape,
         attack_id=args.attack_id,
-        attack_frame_ids=args.attack_frame_ids
+        attack_frame_ids=args.attack_frame_ids,
+        offset=current_offset
     )
 
     assert args.vfov is not None and args.hfov is not None
