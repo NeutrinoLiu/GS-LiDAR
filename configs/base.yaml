@@ -29,8 +29,8 @@ sky_depth: True
 raydrop_prior_lr: 0.1
 
 # DatasetParams
-spoof_offset: "offsets/spoof_offset.npy"
-remove_offset: "offsets/remove_offset.npy"
+spoof_offset: "offsets/spoof_offsets.npy"
+remove_offset: "offsets/remove_offsets.npy"
 
 test_iterations: [7000, 30000]
 save_iterations: [7000, 30000]
@@ -38,7 +38,7 @@ checkpoint_iterations: [7000, 15000, 30000]
 exhaust_test: false
 test_interval: 5000
 render_static: false
-vis_step: 200
+vis_step: 10
 start_checkpoint: null
 seed: 0
 
