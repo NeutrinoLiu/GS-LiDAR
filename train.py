@@ -434,7 +434,7 @@ def training(args):
                 grid = make_grid([visualize_depth(depth, scale_factor=args.scale_factor),
                                   ] + other_img, nrow=4)
 
-                save_image(grid, os.path.join(vis_path, f"{iteration:05d}_{viewpoint_cam.colmap_id:03d}_{viewpoint_cam.sequence_id}.png"))
+                save_image(grid, os.path.join(vis_path, f"{iteration:05d}_{viewpoint_cam.colmap_id:03d}_{viewpoint_cam.name}.png"))
 
             if iteration % args.scale_increase_interval == 0:
                 scene.upScale()
