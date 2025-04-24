@@ -270,7 +270,7 @@ class InteractiveOffsetAdjuster:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Interactively adjust spoof vehicle offset for BEV plots.')
     parser.add_argument('--attack_id', type=int, required=True, help='Attack ID (0-299) to adjust.')
-    parser.add_argument('--offset_file', type=str, default="spoof_offsets.npy", help='Path to the NumPy file for storing offsets (default: spoof_offsets.npy)')
+    parser.add_argument('--offset_file', type=str, default="offsets/spoof_offsets.npy", help='Path to the NumPy file for storing offsets (default: offsets/spoof_offsets.npy)')
     args = parser.parse_args()
 
     if not (0 <= args.attack_id < 300):

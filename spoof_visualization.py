@@ -284,7 +284,7 @@ def generate_attack_bev_plots(attack_id, offset_file="spoof_offsets.npy", save_d
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate Bird\'s-Eye View plots for spoof attacks with motion vectors, applying stored offsets.')
     parser.add_argument('--attack_id', type=int, required=True, help='Attack ID (0-299) to process')
-    parser.add_argument('--offset_file', type=str, default="spoof_offsets.npy", help='Path to the NumPy file storing offsets (default: spoof_offsets.npy)')
+    parser.add_argument('--offset_file', type=str, default="offsets/spoof_offsets.npy", help='Path to the NumPy file storing offsets (default: offsets/spoof_offsets.npy)')
     parser.add_argument('--save_dir_base', type=str, default="bev_plots", help='Base directory to save plots (default: bev_plots)')
     args = parser.parse_args()
 
