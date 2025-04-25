@@ -814,7 +814,7 @@ if __name__ == "__main__":
 
     # Training done
     print("\nTraining complete.")
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     if not args.test_only:
         refine()
