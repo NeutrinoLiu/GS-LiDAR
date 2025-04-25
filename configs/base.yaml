@@ -24,7 +24,7 @@ lambda_flow_loss: 0.0
 lambda_edge_guidance: 0.0
 lambda_gs_opa: 0.0
 lambda_depth_var: 0.0
-error_map： True
+error_map: True
 dynamic: True
 sky_depth: True
 raydrop_prior_lr: 0.1
