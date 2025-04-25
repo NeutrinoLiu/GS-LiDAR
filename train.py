@@ -431,6 +431,21 @@ def training(args):
                     distortion = visualize_depth(distortion, near=0.01, far=1)
                     other_img.append(distortion)
 
+                if args.error_map:
+                    depth_ano_abs_diff = torch.abs(depth_another - pts_depth)
+                    # apply diff with mask, other pixel as 0
+                    depth_ano_abs_diff = depth_ano_abs_diff * mask
+                    depth_ano_abs_diff = depth_ano_abs_diff / depth_ano_abs_diff.max()
+                    depth_ano_abs_diff = visualize_depth(depth_ano_abs_diff, near=0.01, far=1)
+                    other_img.append(depth_ano_abs_diff)
+
+                    depth_abs_diff = torch.abs(depth - pts_depth)
+                    # apply diff with mask, other pixel as 0
+                    depth_abs_diff = depth_abs_diff * mask
+                    depth_abs_diff = depth_abs_diff / depth_abs_diff.max()
+                    depth_abs_diff = visualize_depth(depth_abs_diff, near=0.01, far=1)
+                    other_img.append(depth_abs_diff)
+
                 grid = make_grid([visualize_depth(depth, scale_factor=args.scale_factor),
                                   ] + other_img, nrow=4)
 
